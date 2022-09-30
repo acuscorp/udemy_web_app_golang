@@ -1,8 +1,9 @@
 package main
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
+	"text/template"
 )
 
 const PORT_NUMBER = ":8080"
@@ -17,18 +18,24 @@ func About(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func divideValues(x, y float32) (float32, error) {
-	if y == 0 {
-		return 0, errors.New("cannot divide by 0")
-	}
-	return x / y, nil
-}
-
 func main() {
 	/* indexfor all web pages*/
 	http.HandleFunc("/", Home)
 	http.HandleFunc("/about", About)
-	http.HandleFunc("/divide", Divide)
 
 	_ = http.ListenAndServe(PORT_NUMBER, nil)
+}
+
+func renderTemplate(w http.ResponseWriter, tmpl string) {
+
+	parseTemplate, _ := template.ParseFiles(templateFolderPath() + tmpl)
+
+	err := parseTemplate.Execute(w, nil)
+	if err != nil {
+		fmt.Println("error parsing template:", err)
+	}
+}
+
+func templateFolderPath() string {
+	return "./templates/"
 }
