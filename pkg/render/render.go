@@ -6,25 +6,36 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+
+	"github.com/acuscorp/go-course/pkg/config"
+	"github.com/acuscorp/go-course/pkg/models"
 )
 
-func RenderTemplate(w http.ResponseWriter, tmplName string) {
-	// crerate a template cache
-	tmplCache, err := createTemplateCache()
+var app *config.AppConfig
 
-	if err != nil {
-		log.Fatal(err)
+// NewTemplates sets the config for the template package
+func NewTemplates(a *config.AppConfig) {
+	app = a
+}
+func RenderTemplate(w http.ResponseWriter, tmplName string, td *models.TemplateData) {
+	// check if shoudl use cache memory
+	var tc map[string]*template.Template
+	if app.UseCache {
+		tc = app.TemplateCache
+	} else {
+		tc, _ = CreateTemplateCache()
 	}
+	// get templateCache frrom app config
 
 	// get requested template from cache
-	t, ok := tmplCache[tmplName]
+	t, ok := tc[tmplName]
 	if !ok {
-		log.Fatal(err)
+		log.Fatal("could not get template from template cache")
 	}
 
 	buf := new(bytes.Buffer)
 
-	err = t.Execute(buf, nil)
+	err := t.Execute(buf, td)
 
 	if err != nil {
 		log.Println(err)
@@ -36,7 +47,7 @@ func RenderTemplate(w http.ResponseWriter, tmplName string) {
 	}
 }
 
-func createTemplateCache() (map[string]*template.Template, error) {
+func CreateTemplateCache() (map[string]*template.Template, error) {
 	// myCache := make(map[string]*template.Template)
 	myCahce := map[string]*template.Template{}
 
@@ -71,8 +82,4 @@ func createTemplateCache() (map[string]*template.Template, error) {
 	}
 	return myCahce, nil
 
-}
-
-func templatesFolderPath() string {
-	return "./templates/"
 }
